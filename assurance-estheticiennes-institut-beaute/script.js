@@ -398,14 +398,9 @@ try {
   });
   if (window.parent !== window) parentBridgePost({ type: 'bridge-ready' });
 
-  /* ---------- Préférences cookies ---------- */
-  var cookieBanner = document.getElementById('cookies');
-  var manageCookies = document.getElementById('manageCookies');
-  var cookiePreferencesPanel = document.getElementById('cookiePreferences');
-  var analyticsCheckbox = document.getElementById('analyticsCookies');
-  var marketingCheckbox = document.getElementById('marketingCookies');
-
-  function setPreferences(nextPreferences) {
+  /* ---------- Préférences cookies (synchronisées avec ubepro-consent.js) ---------- */
+  window.addEventListener('ubepro:cookie-preferences', function (event) {
+    var nextPreferences = (event && event.detail) || window.__UBEPRO_COOKIE_PREFERENCES__ || {};
     preferences = {
       necessary: true,
       analytics: nextPreferences.analytics === true,
@@ -413,56 +408,11 @@ try {
       choiceMade: true
     };
     window.__UBEPRO_COOKIE_PREFERENCES__ = preferences;
-    try { localStorage.setItem(PREF_KEY, JSON.stringify(preferences)); } catch (error) {}
-    updateGoogleConsent(preferences);
     purgeUnconsentedTracking();
     captureTracking(entryUrl);
     captureTracking(window.location.href);
     sendConsentStateToParent();
-    if (cookieBanner) cookieBanner.hidden = true;
-    if (cookiePreferencesPanel) cookiePreferencesPanel.hidden = true;
-  }
-
-  if (cookieBanner) {
-    cookieBanner.hidden = preferences.choiceMade;
-    if (analyticsCheckbox) analyticsCheckbox.checked = preferences.analytics;
-    if (marketingCheckbox) marketingCheckbox.checked = preferences.marketing;
-
-    cookieBanner.querySelectorAll('[data-cookie]').forEach(function (button) {
-      button.addEventListener('click', function () {
-        var action = button.getAttribute('data-cookie');
-        if (action === 'accept') {
-          setPreferences({ analytics: true, marketing: true });
-        } else if (action === 'refuse') {
-          setPreferences({ analytics: false, marketing: false });
-        } else if (action === 'prefs') {
-          if (cookiePreferencesPanel) cookiePreferencesPanel.hidden = false;
-          if (analyticsCheckbox) analyticsCheckbox.checked = preferences.analytics;
-          if (marketingCheckbox) marketingCheckbox.checked = preferences.marketing;
-        }
-      });
-    });
-
-    var saveCookiePreferences = cookieBanner.querySelector('[data-cookie-save]');
-    if (saveCookiePreferences) {
-      saveCookiePreferences.addEventListener('click', function () {
-        setPreferences({
-          analytics: !!(analyticsCheckbox && analyticsCheckbox.checked),
-          marketing: !!(marketingCheckbox && marketingCheckbox.checked)
-        });
-      });
-    }
-  }
-
-  if (manageCookies && cookieBanner) {
-    manageCookies.addEventListener('click', function (event) {
-      event.preventDefault();
-      cookieBanner.hidden = false;
-      if (cookiePreferencesPanel) cookiePreferencesPanel.hidden = false;
-      if (analyticsCheckbox) analyticsCheckbox.checked = preferences.analytics;
-      if (marketingCheckbox) marketingCheckbox.checked = preferences.marketing;
-    });
-  }
+  });
 
   /* ---------- Formulaire multi-étapes ---------- */
   var form = document.getElementById('leadForm');
@@ -868,7 +818,7 @@ try {
   }
 
   function smsRequest(params) {
-    if (window.parent === window) {
+    if (window.parent === window || !parentBridgeNonce) {
       return fetch(formConfig.smsApiUrl, {
         method: 'POST',
         mode: 'cors',
@@ -876,7 +826,6 @@ try {
         body: new URLSearchParams(params)
       }).then(normalizeSmsResult);
     }
-    if (!parentBridgeNonce) return Promise.reject(new Error('Pont SMS de la page publique indisponible.'));
     return new Promise(function (resolve, reject) {
       var requestId = makeId();
       var payload = {
@@ -1166,8 +1115,10 @@ try {
   function buildCrmData() {
     var answers = summaryAndAnswers();
     var tracking = getTrackingPayload();
+    var directUrlParams = parseUrlParams(window.location.href);
     var category = getCurrentUrlCategory() || textValue('categorie') || tracking.categorie || '';
-    var campaignSource = tracking.ltm_source || tracking.utm_source || tracking.source || formConfig.source;
+    var campaignSource = directUrlParams.ltm_source || directUrlParams.utm_source || directUrlParams.source
+      || tracking.ltm_source || tracking.utm_source || tracking.source || formConfig.source;
     var data = {
       nom: textValue('nom'),
       prenom: textValue('prenom'),
@@ -1197,17 +1148,16 @@ try {
       reponse_8: answers.companyState,
       autre_info_fj: answers.autreInfo
     };
-    if (trackingGranted()) {
-      ['user','utm_source','utm_medium','utm_campaign','utm_content','utm_term','utm_id',
-        'utm_category','utm_user','ltm_source','ltm_category','ltm_typ','ltm_user'].forEach(function (key) {
-        if (tracking[key]) data[key] = tracking[key];
-      });
-      if (analyticsGranted()) {
-        if (parentLandingUrlReceived) data.page_url = clean(trackedPageUrl || entryUrl, 1000);
-        data.page_referrer = safeReferrer();
-        data.user_agent = clean(navigator.userAgent, 300);
-        data.langue = clean(navigator.language || '', 20);
-      }
+    ['user','utm_source','utm_medium','utm_campaign','utm_content','utm_term','utm_id',
+      'utm_category','utm_user','ltm_source','ltm_category','ltm_typ','ltm_user'].forEach(function (key) {
+      var val = tracking[key] || directUrlParams[key] || '';
+      if (val) data[key] = val;
+    });
+    if (analyticsGranted()) {
+      if (parentLandingUrlReceived) data.page_url = clean(trackedPageUrl || entryUrl, 1000);
+      data.page_referrer = safeReferrer();
+      data.user_agent = clean(navigator.userAgent, 300);
+      data.langue = clean(navigator.language || '', 20);
     }
     if (marketingGranted()) {
       ['gclid', 'msclkid', 'fbclid'].forEach(function (key) {

@@ -388,13 +388,24 @@
   /* --------------------------------------------------------- mise en place JS */
   function install($) {
     /* 1. Formulaire : on remplace le handler Webflow (qui visait son API). */
-    try { $(document).off("submit", ".w-form form"); } catch (e) {}
+    function detachWebflowSubmit() {
+      try { $(document).off("submit", ".w-form form"); } catch (e) {}
+    }
+    detachWebflowSubmit();
+    setTimeout(detachWebflowSubmit, 0);
+    window.addEventListener("load", detachWebflowSubmit);
 
     $(document).on("submit", "form", function (ev) {
       var form = this;
       // Le moteur de lead standard gère lui-même l'envoi (et ses appels sont
       // redirigés vers l'API locale par les intercepteurs ci-dessus).
-      if (window.__UBEPRO_LEAD_ACTIVE__) return;
+      if (window.__UBEPRO_LEAD_ACTIVE__) {
+        ev.preventDefault();
+        if (window.ubeproLead && typeof window.ubeproLead.send === "function") {
+          window.ubeproLead.send(form);
+        }
+        return false;
+      }
       // Les intégrations Formly sur-mesure envoient déjà vers data-api-endpoint,
       // lui-même redirigé vers l'API locale : on ne double pas l'envoi.
       if (form.hasAttribute("data-api-endpoint")) return;
