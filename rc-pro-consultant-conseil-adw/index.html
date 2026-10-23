@@ -142,7 +142,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="ubepro-ui.css?v=b893875f">
+  <link rel="stylesheet" href="ubepro-ui.css?v=6ebe10ae">
   <!-- /ubepro:head -->
   
   <title>RC Pro &amp; Multirisque Consultant — Devis Gratuit | ComparateurPro</title>
@@ -296,19 +296,19 @@
                           <div><input type="radio" id="st2" name="st" value="Indép" class="hidden"><label for="st2" class="f-card flex-col py-3"><span class="text-xl">💻</span><span class="text-xs font-bold mt-1">Freelance</span></label></div>
                         </div>
                       </div>
-                      <div><label class="block text-xs font-bold text-slate-700 mb-2">Effectif *</label><select id="eff" class="w-full p-3 border-2 border-slate-200 rounded-xl text-sm outline-none focus:border-brand-500 bg-white">
+                      <div><label class="block text-xs font-bold text-slate-700 mb-2">Effectif *</label><select id="eff" name="effectif" class="w-full p-3 border-2 border-slate-200 rounded-xl text-sm outline-none focus:border-brand-500 bg-white">
                           <option value="1">👤 1 personne</option>
                           <option value="2-5">👥 2 à 5</option>
                           <option value="6-20">🏢 6 à 20</option>
                         </select></div>
-                      <div><label class="block text-xs font-bold text-slate-700 mb-2">Code postal *</label><input type="text" id="cp" placeholder="Ex: 75008" maxlength="5" inputmode="numeric" class="w-full p-3 border-2 border-slate-200 rounded-xl text-sm outline-none focus:border-brand-500"></div>
+                      <div><label class="block text-xs font-bold text-slate-700 mb-2">Code postal *</label><input type="text" id="cp" name="code_postal" required="" placeholder="Ex: 75008" maxlength="5" inputmode="numeric" class="w-full p-3 border-2 border-slate-200 rounded-xl text-sm outline-none focus:border-brand-500"></div>
                       <div class="flex gap-2"><button type="button" onclick="pv(2)" class="btn-back">← Retour</button><button type="button" onclick="nx(2)" class="w-2/3 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl shadow-lg text-sm transition">Étape finale →</button></div>
                     </div>
                     <div id="s3" class="lp-step space-y-4">
                       <h3 class="font-bold text-lg">Vos coordonnées</h3>
-                      <div><label class="block text-xs font-bold text-slate-700 mb-1">Nom & Prénom *</label><input type="text" id="nm" placeholder="Marc Dupont" class="w-full p-3 border-2 border-slate-200 rounded-xl text-sm outline-none focus:border-brand-500"></div>
-                      <div><label class="block text-xs font-bold text-slate-700 mb-1">Email pro *</label><input type="email" id="em" placeholder="m@cabinet.fr" class="w-full p-3 border-2 border-slate-200 rounded-xl text-sm outline-none focus:border-brand-500"></div>
-                      <div><label class="block text-xs font-bold text-slate-700 mb-1">Téléphone *</label><input type="tel" id="tl" placeholder="06 12 34 56 78" maxlength="14" class="w-full p-3 border-2 border-slate-200 rounded-xl text-sm outline-none focus:border-brand-500"></div><label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" id="rg" class="mt-1" checked=""><span class="text-[10px] text-slate-500">J'accepte d'être contacté. Données sécurisées.</span></label>
+                      <div><label class="block text-xs font-bold text-slate-700 mb-1">Nom & Prénom *</label><input type="text" id="nm" name="nom" required="" placeholder="Marc Dupont" class="w-full p-3 border-2 border-slate-200 rounded-xl text-sm outline-none focus:border-brand-500"></div>
+                      <div><label class="block text-xs font-bold text-slate-700 mb-1">Email pro *</label><input type="email" id="em" name="mail" required="" placeholder="m@cabinet.fr" class="w-full p-3 border-2 border-slate-200 rounded-xl text-sm outline-none focus:border-brand-500"></div>
+                      <div><label class="block text-xs font-bold text-slate-700 mb-1">Téléphone *</label><input type="tel" id="tl" name="telephone" required="" placeholder="06 12 34 56 78" maxlength="14" class="w-full p-3 border-2 border-slate-200 rounded-xl text-sm outline-none focus:border-brand-500"></div><label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" id="rg" name="consentement" value="oui" required="" class="mt-1" checked=""><span class="text-[10px] text-slate-500">J'accepte d'être contacté. Données sécurisées.</span></label>
                       <div class="flex gap-2"><button type="button" onclick="pv(3)" class="btn-back">←</button><button type="button" onclick="sub()" id="sb-btn" class="w-full py-3.5 btn-shine text-black font-black rounded-xl shadow-lg text-sm">RECEVOIR MES DEVIS</button></div>
                     </div>
                     <div id="s4" class="lp-step text-center py-8 space-y-4">
@@ -430,8 +430,8 @@
   <script>window.UBEPRO_STANDARD = {"formId": "ADW_LP_RC_PRO_CONSULTANT_CONSEIL_ADW", "domaine": "comparateurpro.fr", "leadApiUrl": "https://mc.hellolead.pro/mon_compte/api/webflow/get_information.php", "leadApiMode": "nocors", "googleScriptUrl": "https://script.google.com/macros/s/AKfycbwrbyCb9-cAmIRPGNvnb-aM-CkhQAerrkfP3_HSw-ewmThxsn4vbZt5daaq2aOnL01a1w/exec", "privacyUrl": "/politique-de-confidentialite-donnees-personnelles/", "legalUrl": "/mentions-legales/"};</script>
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-53SH7D7F"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-  <script src="ubepro-consent.js?v=b893875f" defer></script>
-  <script src="ubepro-lead.js?v=b893875f" defer></script>
+  <script src="ubepro-consent.js?v=6ebe10ae" defer></script>
+  <script src="ubepro-lead.js?v=6ebe10ae" defer></script>
   <!-- /ubepro:body -->
 </body>
 </html>

@@ -20,6 +20,7 @@
   window.__UBEPRO_CONSENT_ACTIVE__ = true;
 
   const COOKIE_NAME = 'user_cookie_preferences';
+  const LEGACY_STORAGE_KEY = 'ubeproCookiePreferencesV1';
   const COOKIE_EXPIRATION_DAYS = 180;
   const TRACKING_STORAGE_KEY = 'ubepro_tracking_v1';
   const TRACKING_PAGE_KEY = 'ubepro_tracking_page_url_v1';
@@ -32,7 +33,7 @@
   }, window.UBEPRO_STANDARD || {});
 
   /* ---------------------------------------------------------------- */
-  /* Cookie                                                            */
+  /* Cookie & Stockage                                                 */
   /* ---------------------------------------------------------------- */
 
   const normalizePreferences = (value) => ({
@@ -43,7 +44,7 @@
 
   const getBrowserCookie = (name) => {
     const prefix = `${name}=`;
-    for (const part of document.cookie.split(';')) {
+    for (const part of (document.cookie || '').split(';')) {
       const item = part.trim();
       if (item.startsWith(prefix)) {
         const value = item.slice(prefix.length);
@@ -56,10 +57,21 @@
   const deleteBrowserCookie = (name) => {
     const secure = window.location.protocol === 'https:' ? '; Secure' : '';
     document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax${secure}`;
+    try {
+      window.localStorage.removeItem(name);
+      window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+    } catch (_) {}
   };
 
   const readStoredPreferences = () => {
-    const stored = getBrowserCookie(COOKIE_NAME);
+    let stored = getBrowserCookie(COOKIE_NAME);
+    if (!stored) {
+      try {
+        stored = window.localStorage.getItem(COOKIE_NAME) || window.localStorage.getItem(LEGACY_STORAGE_KEY);
+      } catch (_) {
+        stored = null;
+      }
+    }
     if (!stored) return null;
     try {
       const parsed = JSON.parse(stored);
@@ -77,8 +89,40 @@
     const maxAge = Math.max(0, Math.floor(days * 24 * 60 * 60));
     const expires = new Date(Date.now() + maxAge * 1000).toUTCString();
     const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-    document.cookie = `${name}=${encodeURIComponent(JSON.stringify(value))}`
+    const serialized = JSON.stringify(value);
+    document.cookie = `${name}=${encodeURIComponent(serialized)}`
       + `; Expires=${expires}; Max-Age=${maxAge}; Path=/; SameSite=Lax${secure}`;
+    try {
+      window.localStorage.setItem(name, serialized);
+      window.localStorage.setItem(LEGACY_STORAGE_KEY, serialized);
+    } catch (_) {}
+  };
+
+  /* ---------------------------------------------------------------- */
+  /* Nettoyage défensif des anciens bandeaux doublons                  */
+  /* ---------------------------------------------------------------- */
+
+  const removeLegacyBanners = () => {
+    const legacyIds = ['content-cookie', 'content-cookie-modal', 'cookies', 'cookiePreferences'];
+    for (const id of legacyIds) {
+      const node = document.getElementById(id);
+      if (node) node.remove();
+    }
+    if (document.body && document.body.style.overflow === 'hidden' && !document.body.classList.contains('ubp-cookie-modal-open')) {
+      document.body.style.overflow = '';
+    }
+  };
+
+  const hasParentConsentBanner = () => {
+    try {
+      if (window.self === window.top) return false;
+      return Boolean(
+        window.top &&
+        (window.top.__UBEPRO_CONSENT_ACTIVE__ || window.top.document?.getElementById('ubp-content-cookie'))
+      );
+    } catch (_) {
+      return false;
+    }
   };
 
   /* ---------------------------------------------------------------- */
@@ -244,7 +288,13 @@
     document.body.classList.remove('ubp-cookie-modal-open');
   };
 
-  const showBanner = () => { if (elements.cookieBanner) elements.cookieBanner.hidden = false; };
+  const showBanner = () => {
+    if (hasParentConsentBanner()) {
+      if (elements.cookieBanner) elements.cookieBanner.hidden = true;
+      return;
+    }
+    if (elements.cookieBanner) elements.cookieBanner.hidden = false;
+  };
 
   const applyPreferencesToUI = (preferences) => {
     if (elements.analyticsToggle) elements.analyticsToggle.checked = preferences.analytics;
@@ -256,6 +306,12 @@
   };
 
   const showModal = (opener) => {
+    if (hasParentConsentBanner()) {
+      try {
+        window.top.ubeproConsent?.open();
+        return;
+      } catch (_) {}
+    }
     if (!elements.cookieModal) return;
     returnFocusTo = opener || document.activeElement;
     applyPreferencesToUI(readStoredPreferences() || DEFAULT_PREFERENCES);
@@ -304,6 +360,7 @@
   /* ---------------------------------------------------------------- */
 
   const init = () => {
+    removeLegacyBanners();
     if (document.getElementById('ubp-content-cookie')) return;  // déjà monté
     mount();
 
@@ -313,8 +370,21 @@
     pruneOptionalTrackingStorage(window.__UBEPRO_COOKIE_PREFERENCES__);
 
     consentModeUpdate(window.__UBEPRO_COOKIE_PREFERENCES__);
-    if (savedPreferences) hideBannerAndModal();
+    if (savedPreferences || hasParentConsentBanner()) hideBannerAndModal();
     else showBanner();
+
+    if (hasParentConsentBanner()) {
+      try {
+        window.top.addEventListener('ubepro:cookie-preferences', (e) => {
+          const prefs = normalizePreferences(e.detail || readStoredPreferences() || DEFAULT_PREFERENCES);
+          window.__UBEPRO_COOKIE_PREFERENCES__ = prefs;
+          applyPreferencesToUI(prefs);
+          pruneOptionalTrackingStorage(prefs);
+          consentModeUpdate(prefs);
+          hideBannerAndModal();
+        });
+      } catch (_) {}
+    }
 
     const acceptAll = () => savePreferences({ essential: true, analytics: true, marketing: true });
     const refuseOptional = () => savePreferences(DEFAULT_PREFERENCES);
@@ -332,6 +402,9 @@
       });
     });
     elements.modalCloseBtn?.addEventListener('click', closeModal);
+    elements.cookieModal?.addEventListener('click', (event) => {
+      if (event.target === elements.cookieModal) closeModal();
+    });
 
     document.addEventListener('keydown', (event) => {
       if (!elements.cookieModal || elements.cookieModal.hidden) return;
@@ -357,10 +430,10 @@
     });
 
     // Lien « Gérer les cookies » : n'importe quel élément portant
-    // #open-cookie-preferences-btn, [data-cookie-manage] ou .btn-cookie-link.
+    // #open-cookie-preferences-btn, #manageCookies, [data-cookie-manage] ou .btn-cookie-link.
     document.addEventListener('click', (event) => {
       const trigger = event.target.closest(
-        '#open-cookie-preferences-btn, [data-cookie-manage], .btn-cookie-link, [data-ubp-cookie-manage]'
+        '#open-cookie-preferences-btn, #manageCookies, #cookie-settings-button, [data-cookie-manage], .btn-cookie-link, [data-ubp-cookie-manage]'
       );
       if (!trigger) return;
       event.preventDefault();
@@ -368,7 +441,7 @@
     });
 
     window.ubeproConsent = {
-      version: '2026-10-23-standard1',
+      version: '2026-10-23-standard2',
       open: () => showModal(document.activeElement),
       get: () => readStoredPreferences(),
       set: (value) => savePreferences(value),
