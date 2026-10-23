@@ -1,0 +1,29 @@
+# robots.txt — mercedes-benz-sprinter
+# URL canonique : https://www.comparateurpro.fr/mercedes-benz-sprinter/
+
+User-agent: *
+Allow: /
+
+# Moteurs IA & agents conversationnels (GEO)
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://www.comparateurpro.fr/mercedes-benz-sprinter/sitemap.xml

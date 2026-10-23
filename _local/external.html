@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Lien externe désactivé (mode local)</title>
+<style>
+  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+         font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+         background:#f9fafb; color:#111827; padding:24px; }
+  .card { max-width:560px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:28px 30px; }
+  h1 { font-size:18px; margin:0 0 10px; }
+  p { color:#4b5563; margin:0 0 14px; }
+  code { background:#f3f4f6; padding:2px 6px; border-radius:5px; font-size:12.5px; word-break:break-all; }
+  a { color:#4f46e5; text-decoration:none; }
+  .muted { color:#9ca3af; font-size:12.5px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Lien externe désactivé</h1>
+  <p>Cette page est testée en local : les appels vers des domaines externes ont été retirés
+     pour que le parcours soit entièrement reproductible hors ligne.</p>
+  <p id="target" class="muted"></p>
+  <p><a href="/">← Retour à l'index des sites</a></p>
+</div>
+<script>
+  var to = new URLSearchParams(location.search).get('to');
+  if (to) {
+    document.getElementById('target').innerHTML =
+      'Cible d\u2019origine : <code>' + to.replace(/</g, '&lt;') + '</code>';
+  }
+</script>
+</body>
+</html>

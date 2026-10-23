@@ -1,0 +1,6 @@
+# Artefacts du serveur de test local
+_local/leads/*.jsonl
+_local/logs/*.jsonl
+_local/report-localize.json
+__pycache__/
+node_modules/

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leads capturés — local</title>
+<style>
+  :root { --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#4f46e5; --bg:#f9fafb; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+         color:var(--ink); background:var(--bg); }
+  header { background:#fff; border-bottom:1px solid var(--line); padding:20px 26px; display:flex;
+           gap:16px; align-items:center; flex-wrap:wrap; }
+  h1 { margin:0; font-size:18px; }
+  .spacer { flex:1; }
+  .sub { color:var(--muted); font-size:13px; }
+  a.btn, button { border:1px solid var(--line); background:#fff; color:var(--ink); padding:8px 13px;
+                  border-radius:8px; font-size:13px; cursor:pointer; text-decoration:none; }
+  a.btn:hover, button:hover { border-color:var(--accent); color:var(--accent); }
+  main { padding:20px 26px 60px; }
+  table { width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line);
+          border-radius:10px; overflow:hidden; }
+  th, td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { background:#f3f4f6; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  tr:last-child td { border-bottom:none; }
+  .site { font-weight:600; }
+  .fields { color:var(--muted); font-size:12px; max-width:760px; word-break:break-word; }
+  .fields b { color:var(--ink); font-weight:500; }
+  .empty { color:var(--muted); padding:40px 0; text-align:center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Leads capturés localement</h1>
+  <span class="sub" id="count"></span>
+  <span class="spacer"></span>
+  <a class="btn" href="/">← Index des sites</a>
+  <a class="btn" href="/_local/api/leads" target="_blank" rel="noopener">JSON</a>
+  <button id="refresh">Rafraîchir</button>
+</header>
+<main>
+  <div id="content"></div>
+</main>
+<script>
+(function () {
+  var content = document.getElementById('content');
+  function render(leads) {
+    document.getElementById('count').textContent = leads.length + ' lead(s)';
+    if (!leads.length) {
+      content.innerHTML = '<div class="empty">Aucun lead pour le moment.<br>' +
+        'Complétez un formulaire sur un site pour le voir apparaître ici.</div>';
+      return;
+    }
+    var rows = leads.map(function (l) {
+      var f = l.fields || {};
+      var exclude = { '__meta': 1 };
+      var pairs = Object.keys(f).filter(function (k) { return !exclude[k] && f[k] !== ''; })
+        .map(function (k) {
+          var v = f[k];
+          if (typeof v === 'object') v = JSON.stringify(v);
+          return '<b>' + k + '</b> = ' + String(v).slice(0, 90);
+        }).join(' · ');
+      return '<tr><td class="site">' + (l.site || '-') + '</td>' +
+             '<td>' + (l.receivedAt || l.ts || '') + '</td>' +
+             '<td>' + (l.page || '') + '</td>' +
+             '<td class="fields">' + (pairs || '—') + '</td></tr>';
+    }).join('');
+    content.innerHTML = '<table><thead><tr><th>Site</th><th>Reçu</th><th>Page</th>' +
+      '<th>Champs</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  }
+  function load() {
+    fetch('/_local/api/leads').then(function (r) { return r.json(); })
+      .then(function (d) { render(d.leads || []); })
+      .catch(function () {
+        content.innerHTML = '<div class="empty">Serveur local indisponible : lancez ' +
+          '<code>python3 _local/server.py</code>.</div>';
+      });
+  }
+  document.getElementById('refresh').addEventListener('click', load);
+  load();
+})();
+</script>
+</body>
+</html>

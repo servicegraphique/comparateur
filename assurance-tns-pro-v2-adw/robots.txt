@@ -1,0 +1,29 @@
+# robots.txt — assurance-tns-pro-v2-adw
+# URL canonique : https://www.comparateurpro.fr/assurance-tns-pro-v2-adw/
+
+User-agent: *
+Allow: /
+
+# Moteurs IA & agents conversationnels (GEO)
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://www.comparateurpro.fr/assurance-tns-pro-v2-adw/sitemap.xml
